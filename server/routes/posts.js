@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const User = require('../models/user')
 const Posts = require('../models/posts')
+const Share = require('../models/sharePost')
 const auth = require('../middelwares/auth')
 const multer = require('multer')
 // add post
@@ -11,8 +12,7 @@ router.post('/post', auth.user, upload.array('filess', 12), async (req, res) => 
         const post = new Posts({ ...req.body, userId: req.user })
         for (let i = 0; i < req.files.length; i++) { post.fileUp[i] = req.files[i].buffer }
         await post.save()
-        const len = post.fileUp.length
-        res.send({ post, len })
+        res.send(post)
     } catch (e) {
         res.send(e.message)
     }
@@ -23,7 +23,7 @@ router.get('/post/:id', auth.user, async (req, res) => {
         const _id = req.params.id //post id
         const post = await Posts.findByIdAndUpdate(_id, { $inc: { views: 1 } }, { new: true, runValidators: true })
         if (!post) return res.send('no posts founded')
-        res.send(post)
+        res.send(await post.populate('comments'))
     } catch (e) {
         res.send(e.message)
     }
@@ -62,7 +62,7 @@ router.get('/posts', auth.user, async (req, res) => {
 //get all posts for single user
 router.get('/userPosts', auth.user, async (req, res) => {
     try {
-        const posts = await Posts.find({ userId: req.user })
+        const posts = await Posts.find({ userId: req.user._id })
         if (!posts) return res.send('no posts founded')
         res.send(posts)
     } catch (e) {
@@ -72,17 +72,17 @@ router.get('/userPosts', auth.user, async (req, res) => {
 //share post
 router.post('/sharePost/:id', auth.user, async (req, res) => {
     try {
-        const _id = req.params.id //post id 
-        const userId = req.user
-        const posts = await Posts.findOne({ _id })
-        if (!posts) return res.send('no posts founded')
-        const text = posts.text
-        const image = posts.image
-        const userIdForShare = posts.userId
-        const relePostId = posts._id
-        const share = new Posts({ userId, relePostId, text, image, userIdForShare })
-
-        res.send(share)
+        const postId = req.params.id //post id 
+        const _id = req.user._id //user id
+        const shareMod = await Share.findOne({ userId: _id })
+        if (!shareMod) {
+            const share = new Share({ userId: _id })
+            await share.save()
+            const sharePO = await Share.findOneAndUpdate({ userId: _id }, { $push: { sharePost: postId } }, { new: true })
+            return res.send(sharePO)
+        }
+        const sharePO = await Share.findOneAndUpdate({ userId: _id }, { $push: { sharePost: postId } }, { new: true })
+        res.send(sharePO)
     } catch (e) {
         res.send(e.message)
     }

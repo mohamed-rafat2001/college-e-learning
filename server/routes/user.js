@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const User = require('../models/user')
+const Posts = require('../models/posts')
+const Share = require('../models/sharePost')
 const auth = require('../middelwares/auth')
 const bcryptjs = require('bcryptjs')
 const nodemailer = require('nodemailer')
@@ -52,7 +54,11 @@ router.post('/login', async (req, res) => {
 //user profile
 router.get('/profile', auth.user, async (req, res) => {
     try {
-        res.send(req.user)
+        const sharePost = await Share.findOne({ userId: req.user._id }).select('sharePost').populate('sharePost')
+        const posts = await Posts.find({ userId: req.user._id })
+        const allPosts = []
+        allPosts.push(posts, sharePost)
+        res.send(allPosts)
 
     } catch (e) {
         res.send(e.message)
