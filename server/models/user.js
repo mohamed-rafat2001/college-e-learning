@@ -7,13 +7,15 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true,
-        unique: false
+        unique: false,
+        lowercase: true
     },
     lastName: {
         type: String,
         required: true,
         trim: true,
-        unique: false
+        unique: false,
+        lowercase: true
     },
     idNumber: {
         type: Number,
@@ -61,7 +63,7 @@ const userSchema = new mongoose.Schema({
     },
 }, { timestamps: true })
 userSchema.methods.creatToken = function () {
-    const token = jwt.sign({ id: this._id.toString() }, process.env.USER_KEY_TOKEN)
+    const token = jwt.sign({ id: this._id.toString() }, process.env.USER_KEY_TOKEN, { expiresIn: '10m' })
     return token
 }
 userSchema.pre('save', async function (next) {
@@ -73,6 +75,7 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.toJSON = function () {
     const user = this.toObject()
     delete user.password
+    delete user.__v
     return user
 }
 const User = mongoose.model('User', userSchema)

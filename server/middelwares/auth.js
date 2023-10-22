@@ -1,25 +1,39 @@
 const User = require('../models/user')
 const jwt = require("jsonwebtoken")
-const user = async (req, res, next) => {
-    try {
-        const token = req.header('Authorization').replace('Bearer ', '')
-        const verifyToken = jwt.verify(token, process.env.USER_KEY_TOKEN)
-        if (!verifyToken) return res.send('you not user')
-        const user = await User.findById(verifyToken.id)
-        req.user = user
-        next()
-    } catch (e) {
-        res.send(e.message)
+const appError = require('../utils/appError')
+const user =
+    async (req, res, next) => {
+        const authToken = req.header('Authorization')
+        if (!authToken) {
+            const error = appError.Error('token is required', 'fail', 401)
+            return next(error)
+        }
+        const token = authToken.replace('Bearer ', '')
+        try {
+            const verifyToken = jwt.verify(token, process.env.USER_KEY_TOKEN)
+            const user = await User.findById(verifyToken.id)
+            req.user = user
+            next()
+        }
+
+        catch (e) {
+            const error = appError.Error('invalid token', 'fail', 401)
+            return next(error)
+        }
+
+
     }
-}
-const admin = async (req, res, next) => {
-    try {
+const allowTo = (...roles) => {
+    return async (req, res, next) => {
         const admins = await User.find({ role: 'admin' })
-        if (req.user.role !== 'admin') return res.send('you not admin')
+        if (!roles.includes(req.user.role)) {
+            const error = appError.Error('you not authorize', 'fail', 401)
+            return next(error)
+        }
         req.admins = admins
         next()
-    } catch (e) {
-        res.send(e.message)
+
     }
 }
-module.exports = { user, admin }
+
+module.exports = { user, allowTo }

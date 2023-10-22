@@ -4,10 +4,10 @@ const shareSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
     },
-    sharePost: [{
+    sharePost: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Posts'
-    }]
+    }
 })
 const Share = mongoose.model('Share', shareSchema)
 module.exports = Share

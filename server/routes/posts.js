@@ -74,14 +74,8 @@ router.post('/sharePost/:id', auth.user, async (req, res) => {
     try {
         const postId = req.params.id //post id 
         const _id = req.user._id //user id
-        const shareMod = await Share.findOne({ userId: _id })
-        if (!shareMod) {
-            const share = new Share({ userId: _id })
-            await share.save()
-            const sharePO = await Share.findOneAndUpdate({ userId: _id }, { $push: { sharePost: postId } }, { new: true })
-            return res.send(sharePO)
-        }
-        const sharePO = await Share.findOneAndUpdate({ userId: _id }, { $push: { sharePost: postId } }, { new: true })
+        const sharePO = new Share({ userId: _id, sharePost: postId })
+        await sharePO.save()
         res.send(sharePO)
     } catch (e) {
         res.send(e.message)
