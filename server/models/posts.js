@@ -5,8 +5,7 @@ const postsSchema = new mongoose.Schema({
         required: false,
     },
     fileUp: [{
-        type: Buffer,
-        required: false
+        public_id: String, secure_url: String
     }],
     userId: {
         type: mongoose.Schema.Types.ObjectId,

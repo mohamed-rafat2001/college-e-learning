@@ -5,18 +5,25 @@ const bcryptjs = require('bcryptjs')
 const errorHandler = require('../middelwares/errorHandler')
 const appError = require('../utils/appError')
 const Email = require('../utils/sendEmail')
+const cloudinary = require('../utils/cloudinary')
 const singUp = errorHandler(
     async (req, res, next) => {
         const user = new User(req.body)
+        if (!user) {
+            const error = appError.Error('email or password is wrong', 'fail', 404)
+            return next(error)
+        }
         const token = user.creatToken()
         await user.save()
-        res.status(200).send({ user, token })
+        res.status(200).json({ status: 'success', data: { user, token } })
 
     })
 const profileImg = errorHandler(async (req, res, next) => {
-    req.user.image = req.file.buffer
+    const { public_id, secure_url } = await cloudinary.uploader.upload(req.file.path,
+        { folder: `e-Learning/user/${req.user._id}/profileImg` })
+    req.user.image = { public_id, secure_url }
     await req.user.save()
-    res.status(200).send(req.user)
+    res.status(200).send({ status: 'success', data: req.user })
 })
 const login = errorHandler(
     async (req, res, next) => {
@@ -32,7 +39,7 @@ const login = errorHandler(
             return next(error)
         }
         const token = user.creatToken()
-        res.send({ status: 'success', data: { user, token } })
+        res.status(200).json({ status: 'success', data: { user, token } })
 
     }
 )
@@ -45,7 +52,7 @@ const profile = errorHandler(
         const share = await Share.find({ userId: req.user._id }, { 'sharePost': true, '_id': false }).limit(limit).skip(skip).populate('sharePost')
         const posts = await Posts.find({ userId: req.user._id }).limit(limit).skip(skip)
         delete req.user.__v
-        res.send({ user: req.user, posts: [...share, ...posts] })
+        res.status(200).json({ status: 'success', data: { user: req.user, posts: [...share, ...posts] } })
     }
 )
 const updateProfile = errorHandler(
@@ -53,7 +60,7 @@ const updateProfile = errorHandler(
         const updates = Object.keys(req.body)
         updates.forEach(el => req.user[el] = req.body[el]);
         await req.user.save()
-        res.send(req.user)
+        res.status(200).send({ status: 'success', data: req.user })
     }
 )
 const deleteAcount = errorHandler(
@@ -63,19 +70,20 @@ const deleteAcount = errorHandler(
             const error = appError.Error('user not founded', 'fail', 404)
             return next(error)
         }
-        res.send(user)
+        res.status(200).send({ status: 'success', data: user })
+
     }
 )
 const forgotPass = errorHandler(
     async (req, res, next) => {
-
         const email = req.body.email
         const user = await User.findOne({ email })
         if (user) {
             Email(user)
         }
         await user.save()
-        res.send({ message: 'please check your email' })
+        res.status(200).send({ status: 'success', data: "please check your email" })
+
     }
 )
 const resetPassword = errorHandler(
@@ -90,7 +98,7 @@ const resetPassword = errorHandler(
         user.passwordResetToken = ""
         const token = user.creatToken()
         await user.save()
-        res.send({ user, token })
+        res.status(200).json({ status: 'success', data: { user, token } })
     }
 )
 module.exports = {

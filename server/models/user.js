@@ -46,8 +46,7 @@ const userSchema = new mongoose.Schema({
         }
     },
     image: {
-        type: Buffer,
-        required: false
+        public_id: String, secure_url: String
     },
     role: {
         type: String,
@@ -63,7 +62,7 @@ const userSchema = new mongoose.Schema({
     },
 }, { timestamps: true })
 userSchema.methods.creatToken = function () {
-    const token = jwt.sign({ id: this._id.toString() }, process.env.USER_KEY_TOKEN, { expiresIn: '10m' })
+    const token = jwt.sign({ id: this._id.toString() }, process.env.USER_KEY_TOKEN, { expiresIn: '60m' })
     return token
 }
 userSchema.pre('save', async function (next) {

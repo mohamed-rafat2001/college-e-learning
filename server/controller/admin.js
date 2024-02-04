@@ -7,7 +7,8 @@ const Admins = errorHandler(
         if (!req.admins) {
             return next(appError.Error('not admin founded', 'fail', 404))
         }
-        res.send(req.admins)
+        res.status(200).json({ status: 'success', data: req.admins })
+
     }
 )
 const Users = errorHandler(
@@ -16,7 +17,8 @@ const Users = errorHandler(
         if (!users) {
             return next(appError.Error('not users founded', 'fail', 404))
         }
-        res.send(users)
+        res.status(200).json({ status: 'success', data: users })
+
     }
 )
 const singleUser = errorHandler(
@@ -26,7 +28,8 @@ const singleUser = errorHandler(
         if (!user) {
             return next(appError.Error('not user founded', 'fail', 404))
         }
-        res.send(user)
+        res.status(200).json({ status: 'success', data: user })
+
     }
 )
 const deleteUser = errorHandler(
@@ -36,7 +39,8 @@ const deleteUser = errorHandler(
         if (!user) {
             return next(appError.Error('not user founded', 'fail', 404))
         }
-        res.send({ user, message: 'user is deleted' })
+        res.status(200).json({ status: 'success', data: "user deleted" })
+
     }
 )
 const blockAndUnblock = errorHandler(
@@ -45,11 +49,11 @@ const blockAndUnblock = errorHandler(
         const findUser = await User.findById(_id)
         if (findUser.block === false) {
             const user = await User.findByIdAndUpdate(_id, { block: true }, { runValidators: true, new: true })
-            return res.send({ user, message: 'user is blocked' })
+            return res.status(200).json({ status: 'success', data: "user blocked" })
         }
         else {
             const user = await User.findByIdAndUpdate(_id, { block: false }, { runValidators: true, new: true })
-            res.send({ user, message: 'user is unBlocked' })
+            res.status(200).json({ status: 'success', data: "user unBlocked" })
         }
 
 
